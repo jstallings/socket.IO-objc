@@ -23,7 +23,7 @@
 #import "SocketIO.h"
 
 #import "SRWebSocket.h"
-#import "SBJson.h"
+#import "JSONKit.h"
 
 #define DEBUG_LOGS 1
 #define DEBUG_CERTIFICATE 1
@@ -156,7 +156,7 @@ static NSString* kSecureXHRURL = @"https://%@:%d/socket.io/1/xhr-polling/%@";
 - (void) sendJSON:(NSDictionary *)data withAcknowledge:(SocketIOCallback)function
 {
     SocketIOPacket *packet = [[SocketIOPacket alloc] initWithType:@"json"];
-    packet.data = [data JSONRepresentation];
+    packet.data = [data JSONData];
     packet.pId = [self addAcknowledge:function];
     [self send:packet];
 }
@@ -176,7 +176,7 @@ static NSString* kSecureXHRURL = @"https://%@:%d/socket.io/1/xhr-polling/%@";
     }
     
     SocketIOPacket *packet = [[SocketIOPacket alloc] initWithType:@"event"];
-    packet.data = [dict JSONRepresentation];
+    packet.data = [dict JSONData];
     packet.pId = [self addAcknowledge:function];
     if (function) {
         packet.ack = @"data";
@@ -187,7 +187,7 @@ static NSString* kSecureXHRURL = @"https://%@:%d/socket.io/1/xhr-polling/%@";
 - (void) sendAcknowledgement:(NSString *)pId withArgs:(NSArray *)data 
 {
     SocketIOPacket *packet = [[SocketIOPacket alloc] initWithType:@"ack"];
-    packet.data = [data JSONRepresentation];
+    packet.data = [data JSONData];
     packet.pId = pId;
     packet.ack = @"data";
 
@@ -379,7 +379,7 @@ static NSString* kSecureXHRURL = @"https://%@:%d/socket.io/1/xhr-polling/%@";
                     NSString *argsStr = [piece objectAtIndex:3];
                     id argsData = nil;
                     if (argsStr && ![argsStr isEqualToString:@""]) {
-                        argsData = [argsStr JSONValue];
+                        argsData = [argsStr objectFromJSONString];
                         if ([argsData count] > 0) {
                             argsData = [argsData objectAtIndex:0];
                         }
@@ -745,7 +745,7 @@ didReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge
 
 - (id) dataAsJSON
 {
-    return [self.data JSONValue];
+    return [self.data objectFromJSONString];
 }
 
 - (NSNumber *) typeAsNumber
